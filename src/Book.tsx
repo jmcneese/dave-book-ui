@@ -1,4 +1,5 @@
-import { AppShell, Box, Group, Header, Title } from '@mantine/core'
+import { AppShell, Box, createStyles, Group, Header, Switch, Title, useMantineColorScheme } from '@mantine/core'
+import { IconSun, IconMoonStars } from '@tabler/icons-react'
 import { clone, find, map, range } from 'lodash'
 import { LoremIpsum } from 'lorem-ipsum'
 import { useCallback, useMemo, useState } from 'react'
@@ -36,8 +37,15 @@ const data = map<number, Chapter>(range(1, 20), (chapterIdx) => {
     scenes: map<number, Scene>(range(1, 10), (sceneIdx) => createScene(chapter.id, sceneIdx))
   }
 })
+const useStyles = createStyles((theme) => ({
+  main: {
+    backgroundColor: theme.colorScheme === 'light' ? theme.colors.gray[0] : theme.colors.dark[6]
+  }
+}))
 
 export const Book = () => {
+  const { classes, theme } = useStyles()
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme()
   const [chapters, _setChapters] = useState<Chapter[]>(data)
   const [activeChapter, _setActiveChapter] = useState(data[0])
   const [activeScene, _setActiveScene] = useState(data[0].scenes[0])
@@ -188,25 +196,43 @@ export const Book = () => {
   return (
     <BookContext.Provider value={bookContextValue}>
       <AppShell
+        classNames={{
+          main: classes.main
+        }}
         fixed
         navbar={<LeftPanel />}
         header={
           <Header height={60}>
             <Group
               align='center'
+              position='apart'
               h={60}
               px='xs'
             >
               <Title order={1}>Book Title</Title>
+              <Switch
+                checked={colorScheme === 'dark'}
+                onChange={useCallback(() => toggleColorScheme(), [toggleColorScheme])}
+                size='lg'
+                onLabel={
+                  <IconMoonStars
+                    color={theme.white}
+                    size='1.25rem'
+                    stroke={1.5}
+                  />
+                }
+                offLabel={
+                  <IconSun
+                    color={theme.colors.gray[6]}
+                    size='1.25rem'
+                    stroke={1.5}
+                  />
+                }
+              />
             </Group>
           </Header>
         }
         padding={0}
-        styles={(theme) => ({
-          main: {
-            backgroundColor: theme.colors.gray[0]
-          }
-        })}
       >
         <Box
           px='md'

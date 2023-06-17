@@ -1,4 +1,16 @@
-import { ActionIcon, Center, Divider, Group, Navbar, NavLink, ScrollArea, Text, Title } from '@mantine/core'
+import {
+  ActionIcon,
+  Center,
+  Divider,
+  Group,
+  Navbar,
+  NavLink,
+  ScrollArea,
+  Text,
+  Title,
+  useMantineColorScheme,
+  useMantineTheme
+} from '@mantine/core'
 import { IconChevronRight, IconGripVertical, IconPlus } from '@tabler/icons-react'
 import { map } from 'lodash'
 import { type FC, useCallback } from 'react'
@@ -9,6 +21,7 @@ import { useBookContext } from './Book.context'
 interface LeftPanelProps {}
 
 export const LeftPanel: FC<LeftPanelProps> = () => {
+  const theme = useMantineTheme()
   const { activeChapter, activeScene, addChapter, chapters, reorderChapter, setActiveChapter, setActiveScene } =
     useBookContext()
 
@@ -30,7 +43,7 @@ export const LeftPanel: FC<LeftPanelProps> = () => {
           <IconPlus />
         </ActionIcon>
       </Group>
-      <Divider color='gray.3' />
+      <Divider color={theme.colorScheme === 'light' ? theme.colors.gray[3] : theme.colors.dark[4]} />
       <ScrollArea>
         <DragDropContext
           onDragEnd={useCallback(

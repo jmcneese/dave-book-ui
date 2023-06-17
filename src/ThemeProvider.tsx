@@ -1,27 +1,37 @@
-import {
-  MantineProvider,
-  MantineThemeOverride
-} from '@mantine/core'
+import { ColorSchemeProvider, ColorScheme, MantineProvider } from '@mantine/core'
+import { useHotkeys, useLocalStorage, useColorScheme } from '@mantine/hooks'
 import { ReactNode } from 'react'
 
-export const theme: MantineThemeOverride = {
-  colorScheme: 'light'
-}
-
 interface ThemeProviderProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
-export function ThemeProvider ({ children }: ThemeProviderProps) {
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const preferredColorScheme = useColorScheme()
+  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
+    key: 'mantine-color-scheme',
+    defaultValue: preferredColorScheme,
+    getInitialValueInEffect: true
+  })
+  const toggleColorScheme = (value?: ColorScheme) =>
+    setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'))
+
+  useHotkeys([['mod+J', () => toggleColorScheme()]])
+
   return (
-    <MantineProvider
-      withGlobalStyles
-      withNormalizeCSS
-      theme={{
-        colorScheme: 'light'
-      }}
+    <ColorSchemeProvider
+      colorScheme={colorScheme}
+      toggleColorScheme={toggleColorScheme}
     >
-      {children}
-    </MantineProvider>
+      <MantineProvider
+        theme={{
+          colorScheme
+        }}
+        withGlobalStyles
+        withNormalizeCSS
+      >
+        {children}
+      </MantineProvider>
+    </ColorSchemeProvider>
   )
 }
