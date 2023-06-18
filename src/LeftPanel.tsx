@@ -8,7 +8,6 @@ import {
   ScrollArea,
   Text,
   Title,
-  useMantineColorScheme,
   useMantineTheme
 } from '@mantine/core'
 import { IconChevronRight, IconGripVertical, IconPlus } from '@tabler/icons-react'
@@ -22,8 +21,15 @@ interface LeftPanelProps {}
 
 export const LeftPanel: FC<LeftPanelProps> = () => {
   const theme = useMantineTheme()
-  const { activeChapter, activeScene, addChapter, chapters, reorderChapter, setActiveChapter, setActiveScene } =
-    useBookContext()
+  const {
+    activeChapter,
+    activeScene,
+    chapters,
+    reorderChapter,
+    setActiveChapter,
+    setActiveScene,
+    showAddChapterModal
+  } = useBookContext()
 
   return (
     <Navbar width={{ base: 300 }}>
@@ -35,7 +41,7 @@ export const LeftPanel: FC<LeftPanelProps> = () => {
         <Title order={3}>Chapters</Title>
         <ActionIcon
           color='blue'
-          onClick={() => addChapter()}
+          onClick={showAddChapterModal}
           size='xs'
           title='Add Chapter'
           variant='subtle'

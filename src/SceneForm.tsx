@@ -1,52 +1,55 @@
 import { Textarea, TextInput } from '@mantine/core'
 import { useForm, zodResolver } from '@mantine/form'
-import { type FC } from 'react'
+import { type FC, useEffect } from 'react'
 import z from 'zod'
 
-import { useBookContext } from './Book.context'
+import { Form } from './Form'
 import { type Scene } from './types'
-import { useDebouncedEffect } from './useDebouncedEffect'
 
 const formSchema = z.object({
   summary: z.string().trim().nonempty('Cannot be empty'),
   title: z.string().trim().nonempty('Cannot be empty').min(10, 'Must be at least 10 characters')
 })
 
-export interface SceneFormProps {
-  scene: Scene
+export interface SceneFormData {
+  summary: string
+  title: string
 }
 
-export const SceneForm: FC<SceneFormProps> = ({ scene }) => {
-  const { updateScene } = useBookContext()
+export interface SceneFormProps {
+  scene?: Scene
+  isSaving?: boolean
+  onChange?(values: SceneFormData, isValid: boolean): void
+  onSubmit?(values: SceneFormData): void
+}
+
+export const SceneForm: FC<SceneFormProps> = ({ scene, isSaving, onChange, onSubmit }) => {
   const form = useForm({
     initialValues: {
-      summary: scene.summary,
-      title: scene.title
+      summary: scene?.summary || '',
+      title: scene?.title || ''
     },
     validate: zodResolver(formSchema),
     validateInputOnChange: true
   })
 
-  useDebouncedEffect(
-    () => {
-      if (form.isDirty() && form.isValid()) {
-        updateScene({
-          ...scene,
-          ...form.values
-        })
-      }
-    },
-    [form.values],
-    {
-      delay: 300
+  useEffect(() => {
+    if (form.isDirty()) {
+      onChange?.(form.values, form.isValid())
     }
-  )
+  }, [form, form.values, onChange])
 
   return (
-    <>
+    <Form
+      buttons={!!onSubmit}
+      isSaving={isSaving}
+      isValid={form.isValid()}
+      onSubmit={onSubmit && form.onSubmit(onSubmit)}
+    >
       <TextInput
         autoCapitalize='words'
         label='Title'
+        mb='xs'
         required
         spellCheck
         {...form.getInputProps('title')}
@@ -55,11 +58,12 @@ export const SceneForm: FC<SceneFormProps> = ({ scene }) => {
         autoCapitalize='sentences'
         autosize
         label='Summary'
+        mb='xs'
         minRows={4}
         required
         spellCheck
         {...form.getInputProps('summary')}
       />
-    </>
+    </Form>
   )
 }

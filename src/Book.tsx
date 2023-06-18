@@ -1,12 +1,17 @@
 import { AppShell, Box, createStyles, Group, Header, Switch, Title, useMantineColorScheme } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { IconSun, IconMoonStars } from '@tabler/icons-react'
 import { clone, find, map, range } from 'lodash'
 import { LoremIpsum } from 'lorem-ipsum'
 import { useCallback, useMemo, useState } from 'react'
 
-import { BookContext } from './Book.context'
+import { BookContext, type BookContextValue } from './Book.context'
+import { AddChapterModal } from './AddChapterModal'
+import { AddSceneModal } from './AddSceneModal'
+import { type ChapterFormData } from './ChapterForm'
 import { LeftPanel } from './LeftPanel'
 import { RightPanel } from './RightPanel'
+import { SceneFormData } from './SceneForm'
 import { type Chapter, type Scene } from './types'
 
 const loremIpsum = new LoremIpsum()
@@ -50,13 +55,20 @@ export const Book = () => {
   const [activeChapter, _setActiveChapter] = useState(data[0])
   const [activeScene, _setActiveScene] = useState(data[0].scenes[0])
 
-  const addChapter = useCallback(
-    () =>
-      _setChapters((prevChapters) => {
-        const chapter = createChapter(prevChapters.length + 1)
-        const scene = createScene(chapter.id)
+  const [showAddChapterModal, addChapterModalHandlers] = useDisclosure(false)
+  const [showAddSceneModal, addSceneModalHandlers] = useDisclosure(false)
 
-        chapter.scenes.push(scene)
+  const addChapter = useCallback(
+    (chapterData: ChapterFormData) =>
+      _setChapters((prevChapters) => {
+        const chapterId = randomId()
+        const scene = createScene(chapterId, 1)
+        const chapter: Chapter = {
+          ...chapterData,
+          id: chapterId,
+          scenes: [scene],
+          sequence: prevChapters.length + 1
+        }
 
         _setActiveChapter(chapter)
         _setActiveScene(scene)
@@ -66,11 +78,17 @@ export const Book = () => {
     []
   )
   const addScene = useCallback(
-    (chapterId: string) =>
+    (chapterId: string, sceneData: SceneFormData) =>
       _setChapters((prevChapters) =>
         map(prevChapters, (chapter) => {
           if (chapter.id === chapterId) {
-            const scene = createScene(chapter.id, chapter.scenes.length + 1)
+            const sceneId = randomId()
+            const scene: Scene = {
+              ...sceneData,
+              chapterId,
+              id: sceneId,
+              sequence: chapter.scenes.length + 1
+            }
             const updatedChapter: Chapter = {
               ...chapter,
               scenes: [...chapter.scenes, scene]
@@ -164,17 +182,21 @@ export const Book = () => {
     [getChapter, updateChapter]
   )
 
-  const bookContextValue = useMemo(
+  const bookContextValue = useMemo<BookContextValue>(
     () => ({
       activeChapter,
       activeScene,
       addChapter,
       addScene,
       chapters,
+      hideAddChapterModal: addChapterModalHandlers.close,
+      hideAddSceneModal: addSceneModalHandlers.close,
       reorderChapter,
       reorderScene,
       setActiveChapter,
       setActiveScene,
+      showAddChapterModal: addChapterModalHandlers.open,
+      showAddSceneModal: addSceneModalHandlers.open,
       updateChapter,
       updateScene
     }),
@@ -182,7 +204,11 @@ export const Book = () => {
       activeChapter,
       activeScene,
       addChapter,
+      addChapterModalHandlers.close,
+      addChapterModalHandlers.open,
       addScene,
+      addSceneModalHandlers.close,
+      addSceneModalHandlers.open,
       chapters,
       reorderChapter,
       reorderScene,
@@ -241,6 +267,28 @@ export const Book = () => {
           <RightPanel key={`${activeChapter.id}-${activeScene.id}`} />
         </Box>
       </AppShell>
+      <AddChapterModal
+        opened={showAddChapterModal}
+        onClose={addChapterModalHandlers.close}
+        onSubmit={useCallback(
+          (values) => {
+            addChapter(values)
+            addChapterModalHandlers.close()
+          },
+          [addChapter, addChapterModalHandlers]
+        )}
+      />
+      <AddSceneModal
+        opened={showAddSceneModal}
+        onClose={addSceneModalHandlers.close}
+        onSubmit={useCallback(
+          (values) => {
+            addScene(activeChapter.id, values)
+            addSceneModalHandlers.close()
+          },
+          [activeChapter.id, addScene, addSceneModalHandlers]
+        )}
+      />
     </BookContext.Provider>
   )
 }

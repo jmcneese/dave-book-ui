@@ -1,11 +1,11 @@
 import { Accordion, ActionIcon, Center, createStyles, Group, Stack, Text, Title } from '@mantine/core'
 import { IconGripVertical, IconPlus } from '@tabler/icons-react'
-import { find, map } from 'lodash'
-import { type FC, useCallback } from 'react'
+import { debounce, find, map } from 'lodash'
+import { type FC, useCallback, useMemo } from 'react'
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd'
 
 import { useBookContext } from './Book.context'
-import { ChapterForm } from './ChapterForm'
+import { ChapterForm, ChapterFormData } from './ChapterForm'
 import { ScenePanel } from './ScenePanel'
 
 const useStyles = createStyles((theme) => ({
@@ -18,13 +18,30 @@ const useStyles = createStyles((theme) => ({
 export interface RightPanelProps {}
 
 export const RightPanel: FC<RightPanelProps> = () => {
-  const { activeChapter, activeScene, addScene, reorderScene, setActiveScene } = useBookContext()
+  const { activeChapter, activeScene, reorderScene, setActiveScene, showAddSceneModal, updateChapter } =
+    useBookContext()
   const { classes } = useStyles()
+
+  const onFormChange = useMemo(
+    () =>
+      debounce(
+        (values: ChapterFormData) =>
+          updateChapter({
+            ...activeChapter,
+            ...values
+          }),
+        300
+      ),
+    [activeChapter, updateChapter]
+  )
 
   return (
     <Stack spacing='xs'>
       <Title order={4}>Chapter {activeChapter.sequence}</Title>
-      <ChapterForm chapter={activeChapter} />
+      <ChapterForm
+        chapter={activeChapter}
+        onChange={onFormChange}
+      />
       <Group
         position='apart'
         spacing='xs'
@@ -34,7 +51,7 @@ export const RightPanel: FC<RightPanelProps> = () => {
         <Title order={4}>Scenes</Title>
         <ActionIcon
           color='blue'
-          onClick={useCallback(() => addScene(activeChapter.id), [activeChapter, addScene])}
+          onClick={showAddSceneModal}
           size='xs'
           title='Add Section'
           variant='subtle'
