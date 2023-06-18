@@ -1,7 +1,7 @@
 import { Accordion, ActionIcon, Center, createStyles, Group, Stack, Text, Title } from '@mantine/core'
 import { IconGripVertical, IconPlus } from '@tabler/icons-react'
 import { debounce, find, map } from 'lodash'
-import { type FC, useCallback, useMemo } from 'react'
+import { type FC, useCallback, useEffect, useMemo, useRef } from 'react'
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd'
 
 import { useBookContext } from './Book.context'
@@ -21,26 +21,33 @@ export const RightPanel: FC<RightPanelProps> = () => {
   const { activeChapter, activeScene, reorderScene, setActiveScene, showAddSceneModal, updateChapter } =
     useBookContext()
   const { classes } = useStyles()
+  const accordionRefs = useRef<Record<string, HTMLDivElement>>({})
 
-  const onFormChange = useMemo(
-    () =>
-      debounce(
-        (values: ChapterFormData) =>
-          updateChapter({
-            ...activeChapter,
-            ...values
-          }),
-        300
-      ),
-    [activeChapter, updateChapter]
-  )
+  useEffect(() => {
+    accordionRefs.current[activeScene.id]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+      inline: 'nearest'
+    })
+  }, [activeScene.id])
 
   return (
     <Stack spacing='xs'>
       <Title order={4}>Chapter {activeChapter.sequence}</Title>
       <ChapterForm
         chapter={activeChapter}
-        onChange={onFormChange}
+        onChange={useMemo(
+          () =>
+            debounce(
+              (values: ChapterFormData) =>
+                updateChapter({
+                  ...activeChapter,
+                  ...values
+                }),
+              300
+            ),
+          [activeChapter, updateChapter]
+        )}
       />
       <Group
         position='apart'
@@ -100,7 +107,12 @@ export const RightPanel: FC<RightPanelProps> = () => {
                   >
                     {(draggable) => (
                       <Accordion.Item
-                        ref={draggable.innerRef}
+                        ref={(ref) => {
+                          if (ref) {
+                            draggable.innerRef(ref)
+                            accordionRefs.current[scene.id] = ref
+                          }
+                        }}
                         value={scene.id}
                         {...draggable.draggableProps}
                       >
